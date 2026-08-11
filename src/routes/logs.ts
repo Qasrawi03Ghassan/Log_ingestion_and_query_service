@@ -7,9 +7,7 @@ import { storeLogs } from "../lib/db/queries/logs.js";
 
 export const logsRouter = Router();
 
-logsRouter.get("/", (req: Request, res: Response) => {
-  res.status(200).json({ Message: "Must get all logs" });
-});
+logsRouter.get("/", (req: Request, res: Response) => {});
 
 logsRouter.post("/", async (req: Request, res: Response) => {
   if (!validateRequest(req)) {

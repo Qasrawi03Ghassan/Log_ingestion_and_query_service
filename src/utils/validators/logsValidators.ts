@@ -57,7 +57,7 @@ function validateLog(log: log) {
   )
     return {
       valid: false,
-      reason: "Invalid level option, use info, debug, error, or warn only",
+      reason: `Invalid level: '${level}'. Use info, debug, error, or warn only`,
     };
   if (typeof service_name !== "string")
     return {
