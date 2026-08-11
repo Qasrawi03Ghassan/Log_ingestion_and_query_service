@@ -80,7 +80,7 @@ function validateLog(log: log) {
   };
 }
 
-function isValidTimestamp(timestamp: unknown): {
+export function isValidTimestamp(timestamp: unknown): {
   valid: boolean;
   reason: string;
 } {
@@ -102,8 +102,6 @@ function isValidTimestamp(timestamp: unknown): {
   }
 
   const date = new Date(timestamp);
-  const fiveMins = 5 * 60 * 1000;
-
   if (Number.isNaN(date.getTime()) || date.toISOString() !== timestamp) {
     return {
       valid: false,
@@ -111,14 +109,18 @@ function isValidTimestamp(timestamp: unknown): {
     };
   }
 
-  const mDate = Date.parse(timestamp);
-  if (mDate > Date.now() + fiveMins)
+  if (!isFutureValid(timestamp, 5 * 60 * 1000))
     return {
       valid: false,
       reason: "Invalid timestamp, must not exceed 5 minutes in the future",
     };
 
   return { valid: true, reason: "ok" };
+}
+
+function isFutureValid(timestamp: string, durationMs: number) {
+  const mDate = Date.parse(timestamp);
+  return mDate <= Date.now() + durationMs;
 }
 
 function isValidAttributes(attributes: unknown): {
