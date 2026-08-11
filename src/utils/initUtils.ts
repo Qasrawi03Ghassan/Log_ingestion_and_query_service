@@ -1,5 +1,5 @@
-import { sql } from "drizzle-orm";
 import { db } from "../lib/db/index.js";
+import { sql } from "drizzle-orm";
 
 export let isServiceReady = false;
 

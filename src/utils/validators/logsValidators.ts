@@ -16,13 +16,17 @@ export function validateRequest(req: Request): boolean {
 }
 
 export function validateLogs(logs: log[]) {
-  let validLogs = [];
-  let invalidLogs = [];
+  let validLogs: log[] = [];
+  let invalidLogs: {
+    index: number;
+    reason: string;
+  }[] = [];
 
   for (let [index, log] of logs.entries()) {
     let item = validateLog(log);
-    if (item.valid === true) validLogs.push(item);
-    else invalidLogs.push({ index, reason: item.reason });
+    if (item.valid === true) {
+      validLogs.push(log);
+    } else invalidLogs.push({ index, reason: item.reason });
   }
   return { validLogs, invalidLogs };
 }
