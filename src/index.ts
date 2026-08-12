@@ -26,7 +26,7 @@ app.get("/", (req: Request, res: Response) => {
   res.status(200).redirect("/health");
 });
 
-app.listen(PORT, () => {
+app.listen(Number(PORT), "0.0.0.0", () => {
   console.log(`Log service started on http://localhost:${PORT} ...`);
 });
 
