@@ -44,7 +44,7 @@ function validateLog(log: log) {
       reason: "one or more of the required parameters are missing or empty",
     };
 
-  const isValidTs = isValidTimestamp(timestamp);
+  const isValidTs = isValidTimestamp(timestamp, true);
   if (!isValidTs.valid) {
     return isValidTs;
   }
@@ -80,7 +80,10 @@ function validateLog(log: log) {
   };
 }
 
-export function isValidTimestamp(timestamp: unknown): {
+export function isValidTimestamp(
+  timestamp: unknown,
+  isIngest: boolean = false,
+): {
   valid: boolean;
   reason: string;
 } {
@@ -109,7 +112,7 @@ export function isValidTimestamp(timestamp: unknown): {
     };
   }
 
-  if (!isFutureValid(timestamp, 5 * 60 * 1000))
+  if (isIngest && !isFutureValid(timestamp, 5 * 60 * 1000))
     return {
       valid: false,
       reason: "Invalid timestamp, must not exceed 5 minutes in the future",

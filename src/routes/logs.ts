@@ -4,7 +4,12 @@ import {
   validateRequest,
   isValidTimestamp,
 } from "../utils/validators/logsValidators.js";
-import { queryLogs, storeLogs } from "../lib/db/queries/logs.js";
+import {
+  queryLogs,
+  storeLogs,
+  aggregateLogs,
+  AggregateFilter,
+} from "../lib/db/queries/logs.js";
 import {
   LogCursor,
   encodeCursor,
@@ -217,6 +222,152 @@ logsRouter.post("/", async (req: Request, res: Response) => {
     .json({ accepted: validLogs.length, rejected: invalidLogs });
 });
 
-logsRouter.get("/aggregate", (req: Request, res: Response) => {
-  res.status(200).json({ Message: "Must return time-bucketed log counts" });
+logsRouter.get("/aggregate", async (req: Request, res: Response) => {
+  const queryParams = {
+    service: req.query.service,
+    level: req.query.level,
+    q: req.query.q,
+    since: req.query.since,
+    until: req.query.until,
+    bucket: req.query.bucket,
+    group_by: req.query.group_by,
+  };
+
+  const attrs: Record<string, string> = {};
+  for (const [key, value] of Object.entries(req.query)) {
+    if (key.startsWith("attr.")) {
+      const attrName = key.slice(5);
+      if (typeof value === "string") {
+        attrs[attrName] = value;
+      }
+    }
+  }
+
+  if (
+    queryParams.service !== undefined &&
+    typeof queryParams.service !== "string"
+  ) {
+    return res.status(400).json({
+      error: "invalid service. Must be a string",
+    });
+  }
+
+  if (
+    queryParams.level !== undefined &&
+    typeof queryParams.level !== "string"
+  ) {
+    return res.status(400).json({
+      error: "invalid level. Must be a string",
+    });
+  }
+
+  if (
+    queryParams.level !== undefined &&
+    !["debug", "info", "warn", "error"].includes(queryParams.level)
+  ) {
+    return res.status(400).json({
+      error: "invalid level. Must be debug, info, warn, or error only",
+    });
+  }
+
+  if (queryParams.q !== undefined) {
+    if (typeof queryParams.q !== "string") {
+      return res.status(400).json({
+        error: "Invalid q parameter",
+      });
+    }
+  }
+
+  if (queryParams.since !== undefined) {
+    if (typeof queryParams.since !== "string") {
+      return res.status(400).json({
+        error: "Invalid since timestamp",
+      });
+    }
+    const isValidSince = isValidTimestamp(queryParams.since);
+    if (!isValidSince.valid) {
+      return res.status(400).json({
+        error: "Invalid since timestamp",
+      });
+    }
+  } else {
+    return res
+      .status(400)
+      .json({ error: "since timestamp parameter is required" });
+  }
+
+  if (queryParams.until !== undefined) {
+    if (typeof queryParams.until !== "string")
+      return res.status(400).json({
+        error: "Invalid until timestamp",
+      });
+
+    const isValidUntil = isValidTimestamp(queryParams.until);
+    if (!isValidUntil.valid) {
+      return res.status(400).json({
+        error: "Invalid until timestamp",
+      });
+    }
+  } else {
+    return res
+      .status(400)
+      .json({ error: "until timestamp parameter is required" });
+  }
+
+  if (queryParams.since !== undefined && queryParams.until !== undefined) {
+    if (Date.parse(queryParams.since) > Date.parse(queryParams.until))
+      return res.status(400).json({
+        error:
+          "Invalid range: since & until timestamps combination are invalid",
+      });
+  }
+
+  if (queryParams.bucket !== undefined) {
+    if (typeof queryParams.bucket !== "string")
+      return res.status(400).json({ error: "Invalid bucket parameter" });
+
+    if (!["1m", "5m", "1h", "1d"].includes(queryParams.bucket))
+      return res.status(400).json({
+        error: `invalid bucket value: '${queryParams.bucket}'. Must be 1m, 5m, 1h, or 1d only`,
+      });
+  } else {
+    return res.status(400).json({ error: "bucket parameter is required" });
+  }
+
+  if (queryParams.group_by !== undefined) {
+    if (typeof queryParams.group_by !== "string")
+      return res.status(400).json({ error: "invalid group_by parameter" });
+
+    if (queryParams.group_by !== "level" && queryParams.group_by !== "service")
+      return res.status(400).json({
+        error: `invalid group_by parameter value:'${queryParams.group_by}'. Must be either level or service only`,
+      });
+  }
+
+  const aggFilter: AggregateFilter = {
+    since: queryParams.since!,
+    until: queryParams.until!,
+    bucket: queryParams.bucket!,
+    service: queryParams.service,
+    level: queryParams.level,
+    group_by: queryParams.group_by,
+    q: queryParams.q?.toLowerCase(),
+    attributes: attrs,
+  };
+
+  try {
+    const aggRes = await aggregateLogs(aggFilter);
+    console.log(aggRes);
+    return res.status(200).json({
+      buckets: aggRes.map((row) => ({
+        start: new Date(row.start).toISOString(),
+        group: row.group,
+        count: Number(row.count),
+      })),
+    });
+  } catch (error) {
+    return res.status(502).json({
+      error: `Cannot aggregate logs form db to the following error: ${error}`,
+    });
+  }
 });
