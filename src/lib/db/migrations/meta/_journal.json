@@ -15,6 +15,13 @@
       "when": 1786610617707,
       "tag": "0001_flimsy_ender_wiggin",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1786613970179,
+      "tag": "0002_blue_mariko_yashida",
+      "breakpoints": true
     }
   ]
 }
