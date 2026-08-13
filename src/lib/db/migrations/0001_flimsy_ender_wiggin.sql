@@ -1,0 +1,1 @@
+CREATE INDEX "logs_timestamp_idx" ON "logs" USING btree ("timestamp");
