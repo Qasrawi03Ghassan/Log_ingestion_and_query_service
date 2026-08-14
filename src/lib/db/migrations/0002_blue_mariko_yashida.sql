@@ -1,1 +1,0 @@
-DROP INDEX "logs_timestamp_idx";

@@ -4,3 +4,5 @@ dist
 .env
 .env.*
 npm-debug.log*
+load-gen
+scripts

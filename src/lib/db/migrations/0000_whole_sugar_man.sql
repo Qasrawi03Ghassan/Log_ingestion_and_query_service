@@ -6,3 +6,6 @@ CREATE TABLE "logs" (
 	"message" varchar(512) NOT NULL,
 	"attributes" jsonb
 );
+--> statement-breakpoint
+CREATE INDEX "logs_timestamp_idx" ON "logs" USING btree ("timestamp");--> statement-breakpoint
+CREATE INDEX "logs_timestamp_id_idx" ON "logs" USING btree ("timestamp","id");

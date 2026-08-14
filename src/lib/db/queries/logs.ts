@@ -130,8 +130,6 @@ export async function aggregateLogs(filters: AggregateFilter) {
       .groupBy(bucket_start, logs.service)
       .orderBy(bucket_start);
 
-    console.log("Aggregate query finished:", result.length);
-
     return result;
   } else if (filters.group_by === "level") {
     const result = await db
@@ -145,8 +143,6 @@ export async function aggregateLogs(filters: AggregateFilter) {
       .groupBy(bucket_start, logs.level)
       .orderBy(bucket_start);
 
-    console.log("Aggregate query finished:", result.length);
-
     return result;
   } else {
     const result = await db
@@ -159,8 +155,6 @@ export async function aggregateLogs(filters: AggregateFilter) {
       .where(and(...conditions))
       .groupBy(bucket_start)
       .orderBy(bucket_start);
-
-    console.log("Aggregate query finished:", result.length);
 
     return result;
   }

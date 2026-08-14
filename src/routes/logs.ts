@@ -157,7 +157,7 @@ logsRouter.get("/", async (req: Request, res: Response) => {
   };
 
   try {
-    /*const logRes = await queryLogs({
+    const logRes = await queryLogs({
       ...filters,
       limit: limit + 1,
     });
@@ -179,8 +179,7 @@ logsRouter.get("/", async (req: Request, res: Response) => {
     return res.status(200).json({
       logs,
       next_cursor,
-    });*/
-    return res.status(200).json({ test: "only" });
+    });
   } catch (error) {
     return res.status(502).json({
       error: `Cannot query logs from database; reason: ${error}`,
@@ -357,16 +356,14 @@ logsRouter.get("/aggregate", async (req: Request, res: Response) => {
   };
 
   try {
-    /*const aggRes = await aggregateLogs(aggFilter);
+    const aggRes = await aggregateLogs(aggFilter);
     return res.status(200).json({
       buckets: aggRes.map((row) => ({
         start: new Date(row.start).toISOString(),
         group: row.group,
         count: Number(row.count),
       })),
-    });*/
-
-    return res.status(200).json({ test: "only" });
+    });
   } catch (error) {
     return res.status(502).json({
       error: `Cannot aggregate logs form db to the following error: ${error}`,
