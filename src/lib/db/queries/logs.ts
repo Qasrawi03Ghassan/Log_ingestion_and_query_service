@@ -26,7 +26,25 @@ export type AggregateFilter = {
   group_by?: string | undefined;
 };
 
-export async function storeLogs(validLogs: log[]) {
+export async function storeLogs(
+  /*timestamps: Date[],
+  services: string[],
+  levels: string[],
+  messages: string[],
+  attributes: (JSON | undefined)[],*/
+  validLogs: log[],
+) {
+  /*await db.execute(sql`
+  INSERT INTO logs ("timestamp", level, service, message, attributes)
+  SELECT *
+  FROM unnest(
+    ${timestamps},
+    ${levels},
+    ${services},
+    ${messages},
+    ${attributes}
+  ) AS t("timestamp", level, service, message, attributes)
+`);*/
   await db.insert(logs).values(validLogs);
 }
 

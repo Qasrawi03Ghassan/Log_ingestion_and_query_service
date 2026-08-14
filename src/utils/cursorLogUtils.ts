@@ -2,7 +2,7 @@ import { isValidTimestamp } from "./validators/logsValidators.js";
 
 export type LogCursor = {
   timestamp: string;
-  id: string;
+  id: number; //changed from string due to using serial instead of uuid in schema
 };
 
 export function encodeCursor(cursor: LogCursor): string {

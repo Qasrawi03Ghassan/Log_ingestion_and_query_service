@@ -3,14 +3,14 @@ import {
   pgTable,
   timestamp,
   varchar,
-  uuid,
+  serial,
   index,
 } from "drizzle-orm/pg-core";
 
 export const logs = pgTable(
   "logs",
   {
-    id: uuid("id").defaultRandom().primaryKey(),
+    id: serial("id").primaryKey(),
     timestamp: timestamp("timestamp", {
       withTimezone: true,
       mode: "date",
