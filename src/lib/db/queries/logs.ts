@@ -27,14 +27,14 @@ export type AggregateFilter = {
 };
 
 export async function storeLogs(
-  /*timestamps: Date[],
+  timestamps: Date[],
   services: string[],
   levels: string[],
   messages: string[],
-  attributes: (JSON | undefined)[],*/
-  validLogs: log[],
+  attributes: (JSON | undefined)[],
+  //validLogs: log[],
 ) {
-  /*await db.execute(sql`
+  await db.execute(sql`
   INSERT INTO logs ("timestamp", level, service, message, attributes)
   SELECT *
   FROM unnest(
@@ -42,10 +42,10 @@ export async function storeLogs(
     ${levels},
     ${services},
     ${messages},
-    ${attributes}
+    ${attributes}::jsonb[]
   ) AS t("timestamp", level, service, message, attributes)
-`);*/
-  await db.insert(logs).values(validLogs);
+`);
+  //await db.insert(logs).values(validLogs);
 }
 
 export async function queryLogs(filters: QueryFilter) {

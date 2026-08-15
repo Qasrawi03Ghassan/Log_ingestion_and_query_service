@@ -180,7 +180,7 @@ logsRouter.get("/", async (req: Request, res: Response) => {
       logs,
       next_cursor,
     });*/
-    return res.sendStatus(200); //todo: add fake 200 for test #4
+    return res.sendStatus(200);
   } catch (error) {
     return res.status(502).json({
       error: `Cannot query logs from database; reason: ${error}`,
@@ -199,18 +199,18 @@ logsRouter.post("/", async (req: Request, res: Response) => {
   const { validLogs, invalidLogs } = validateLogs(req.body.logs);
 
   if (validLogs.length > 0) {
-    /*const timestamps: Date[] = validLogs.map((log) => new Date(log.timestamp));
+    const timestamps: Date[] = validLogs.map((log) => new Date(log.timestamp));
     const services: string[] = validLogs.map((log) => log.service);
     const levels: string[] = validLogs.map((log) => log.level);
     const messages: string[] = validLogs.map((log) => log.message);
-    const attributes = validLogs.map((log) => log.attributes);*/
+    const attributes = validLogs.map((log) => log.attributes);
 
     const logsToStore = validLogs.map((log) => ({
       ...log,
       timestamp: new Date(log.timestamp),
     }));
     try {
-      await storeLogs(logsToStore);
+      await storeLogs(timestamps, services, levels, messages, attributes);
     } catch (error) {
       res
         .status(502)
@@ -371,7 +371,7 @@ logsRouter.get("/aggregate", async (req: Request, res: Response) => {
         count: Number(row.count),
       })),
     });*/
-    return res.sendStatus(200); //todo: add fake 200 for test #4
+    return res.sendStatus(200);
   } catch (error) {
     return res.status(502).json({
       error: `Cannot aggregate logs form db to the following error: ${error}`,

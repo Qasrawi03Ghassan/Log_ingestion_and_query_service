@@ -15,3 +15,7 @@ export async function initService() {
 async function checkDbConn() {
   await db.execute(sql`SELECT 1`);
 }
+
+export function turnHrsToMs(hours: number) {
+  return hours * 60 * 60 * 1000;
+}
