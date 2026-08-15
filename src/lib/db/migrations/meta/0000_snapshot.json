@@ -1,5 +1,5 @@
 {
-  "id": "e5c7162d-c733-4536-bcf6-75db87dfd5d5",
+  "id": "9ec40758-5e95-4475-859f-d9d21cf775a5",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -46,9 +46,36 @@
         }
       },
       "indexes": {
-        "logs_timestamp_idx": {
-          "name": "logs_timestamp_idx",
+        "logs_timestamp_id_idx": {
+          "name": "logs_timestamp_id_idx",
           "columns": [
+            {
+              "expression": "timestamp",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "logs_service_timestamp_idx": {
+          "name": "logs_service_timestamp_idx",
+          "columns": [
+            {
+              "expression": "service",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
             {
               "expression": "timestamp",
               "isExpression": false,
@@ -61,17 +88,17 @@
           "method": "btree",
           "with": {}
         },
-        "logs_timestamp_id_idx": {
-          "name": "logs_timestamp_id_idx",
+        "logs_level_timestamp_idx": {
+          "name": "logs_level_timestamp_idx",
           "columns": [
             {
-              "expression": "timestamp",
+              "expression": "level",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
             },
             {
-              "expression": "id",
+              "expression": "timestamp",
               "isExpression": false,
               "asc": true,
               "nulls": "last"

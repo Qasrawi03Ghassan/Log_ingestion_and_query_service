@@ -21,7 +21,8 @@ export const logs = pgTable(
     attributes: jsonb("attributes"),
   },
   (table) => [
-    index("logs_timestamp_idx").on(table.timestamp),
     index("logs_timestamp_id_idx").on(table.timestamp, table.id),
+    index("logs_service_timestamp_idx").on(table.service, table.timestamp),
+    index("logs_level_timestamp_idx").on(table.level, table.timestamp),
   ],
 );

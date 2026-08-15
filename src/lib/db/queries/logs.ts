@@ -1,8 +1,9 @@
 import { db } from "../index.js";
-import { eq, gte, lt, and, desc, or, sql } from "drizzle-orm";
+import { eq, gte, lt, and, desc, sql } from "drizzle-orm";
 import { logs } from "../schemas/schema.js";
-import { log } from "../../../utils/validators/logsValidators.js";
+
 import { LogCursor } from "../../../utils/cursorLogUtils.js";
+import { log } from "../../../utils/validators/logsValidators.js";
 
 type QueryFilter = {
   service?: string | undefined;
@@ -27,25 +28,31 @@ export type AggregateFilter = {
 };
 
 export async function storeLogs(
-  timestamps: Date[],
+  /*timestamps: Date[],
   services: string[],
   levels: string[],
   messages: string[],
-  attributes: (JSON | undefined)[],
-  //validLogs: log[],
+  attributes: (JSON | undefined)[],*/
+  validLogs: log[],
 ) {
-  await db.execute(sql`
+  /*await db.execute(sql`
   INSERT INTO logs ("timestamp", level, service, message, attributes)
   SELECT *
   FROM unnest(
-    ${timestamps},
-    ${levels},
-    ${services},
-    ${messages},
-    ${attributes}::jsonb[]
-  ) AS t("timestamp", level, service, message, attributes)
-`);
-  //await db.insert(logs).values(validLogs);
+    ${timestamps}::timestamptz[],
+    ARRAY[${levels}]::varchar(10)[],
+    ARRAY[${services}]::varchar(256)[],
+    ARRAY[${messages}]::varchar(512)[],
+    ARRAY[
+  ${sql.join(
+    attributes.map((attribute) => sql`${attribute}::jsonb`),
+    sql`, `,
+  )}
+]::jsonb[]
+    
+  ) 
+`);*/
+  await db.insert(logs).values(validLogs);
 }
 
 export async function queryLogs(filters: QueryFilter) {
@@ -71,13 +78,7 @@ export async function queryLogs(filters: QueryFilter) {
     const cursor = filters.cursor;
 
     conditions.push(
-      or(
-        lt(logs.timestamp, new Date(cursor.timestamp)),
-        and(
-          eq(logs.timestamp, new Date(cursor.timestamp)),
-          lt(logs.id, cursor.id),
-        ),
-      ),
+      sql`(${logs.timestamp}, ${logs.id}) < (${new Date(cursor.timestamp)}, ${cursor.id})`,
     );
   }
 
