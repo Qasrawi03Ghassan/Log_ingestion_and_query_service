@@ -77,7 +77,7 @@ export async function storeLogs(
         attributes.map((attribute) =>
           attribute === undefined || attribute === null
             ? sql`NULL::jsonb`
-            : sql`${JSON.stringify(attribute)}::jsonb`,
+            : sql`${attribute}::jsonb`,
         ),
         sql`, `,
       )}

@@ -14,7 +14,7 @@ export function decodeCursor(cursor: string): LogCursor | null {
     const decoded = Buffer.from(cursor, "base64url").toString("utf-8");
     const parsed = JSON.parse(decoded);
 
-    if (typeof parsed.timestamp !== "string" || typeof parsed.id !== "string") {
+    if (typeof parsed.timestamp !== "string" || typeof parsed.id !== "number") {
       return null;
     }
 
