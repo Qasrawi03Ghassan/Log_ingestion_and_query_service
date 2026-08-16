@@ -23,6 +23,9 @@ services:
     environment:
       DATABASE_URL: postgres://postgres:postgres@pg-db:5432/log_ingestor?sslmode=disable
       PORT: 8080
+      RETENTION_DAYS: 30
+      RETENTION__CHECK_PERIOD_HOURS: 24
+      RETENTION_BATCH_MAX_SIZE: 10000
     depends_on:
       pg-db:
         condition: service_healthy
