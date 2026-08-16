@@ -198,16 +198,23 @@ logsRouter.post("/", async (req: Request, res: Response) => {
   const { validLogs, invalidLogs } = validateLogs(req.body.logs);
 
   if (validLogs.length > 0) {
-    const timestamps: Date[] = validLogs.map((log) => new Date(log.timestamp));
+    /*const timestamps: Date[] = validLogs.map((log) => new Date(log.timestamp));
     const services: string[] = validLogs.map((log) => log.service);
     const levels: string[] = validLogs.map((log) => log.level);
     const messages: string[] = validLogs.map((log) => log.message);
     const attributes: string[] = validLogs.map((log) =>
       JSON.stringify(log.attributes),
-    );
+    );*/
+
+    const logsToStore = validLogs.map((log) => ({
+      ...log,
+      timestamp: new Date(log.timestamp),
+    }));
 
     try {
-      await storeLogs(timestamps, services, levels, messages, attributes);
+      await storeLogs(
+        /*timestamps, services, levels, messages, attributes*/ logsToStore,
+      );
     } catch (error) {
       console.log(error);
       res

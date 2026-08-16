@@ -1,5 +1,5 @@
 import { db } from "../index.js";
-import { eq, gte, lt, and, desc, sql } from "drizzle-orm";
+import { eq, gte, lt, and, desc, sql, asc } from "drizzle-orm";
 import { logs } from "../schemas/schema.js";
 
 import { LogCursor } from "../../../utils/cursorLogUtils.js";
@@ -28,13 +28,14 @@ export type AggregateFilter = {
 };
 
 export async function storeLogs(
-  timestamps: Date[],
+  /*timestamps: Date[],
   services: string[],
   levels: string[],
   messages: string[],
-  attributes: (string | undefined)[],
+  attributes: (string | undefined)[],*/
+  validLogs: log[],
 ) {
-  await db.execute(sql`
+  /*await db.execute(sql`
   INSERT INTO logs (
     "timestamp",
     level,
@@ -83,7 +84,9 @@ export async function storeLogs(
       )}
     ]::jsonb[]
   );
-`);
+`);*/
+
+  await db.insert(logs).values(validLogs);
 }
 
 export async function queryLogs(filters: QueryFilter) {
@@ -166,8 +169,6 @@ export async function aggregateLogs(filters: AggregateFilter) {
     conditions.push(sql`${logs.message} ILIKE ${`%${filters.q}%`}`);
   }
 
-  console.log("Running aggregate query...");
-
   if (filters.group_by === "service") {
     const result = await db
       .select({
@@ -178,7 +179,7 @@ export async function aggregateLogs(filters: AggregateFilter) {
       .from(logs)
       .where(and(...conditions))
       .groupBy(bucket_start, logs.service)
-      .orderBy(bucket_start);
+      .orderBy(asc(bucket_start));
 
     return result;
   } else if (filters.group_by === "level") {
@@ -191,7 +192,7 @@ export async function aggregateLogs(filters: AggregateFilter) {
       .from(logs)
       .where(and(...conditions))
       .groupBy(bucket_start, logs.level)
-      .orderBy(bucket_start);
+      .orderBy(asc(bucket_start));
 
     return result;
   } else {
@@ -204,7 +205,7 @@ export async function aggregateLogs(filters: AggregateFilter) {
       .from(logs)
       .where(and(...conditions))
       .groupBy(bucket_start)
-      .orderBy(bucket_start);
+      .orderBy(asc(bucket_start));
 
     return result;
   }

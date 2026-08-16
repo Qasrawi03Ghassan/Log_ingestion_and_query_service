@@ -1,3 +1,4 @@
+import { desc } from "drizzle-orm";
 import {
   jsonb,
   pgTable,
@@ -5,12 +6,13 @@ import {
   varchar,
   serial,
   index,
+  primaryKey,
 } from "drizzle-orm/pg-core";
 
 export const logs = pgTable(
   "logs",
   {
-    id: serial("id").primaryKey(),
+    id: serial("id").notNull(),
     timestamp: timestamp("timestamp", {
       withTimezone: true,
       mode: "date",
@@ -21,8 +23,11 @@ export const logs = pgTable(
     attributes: jsonb("attributes"),
   },
   (table) => [
-    index("logs_timestamp_id_idx").on(table.timestamp, table.id),
-    index("logs_service_timestamp_idx").on(table.service, table.timestamp),
-    index("logs_level_timestamp_idx").on(table.level, table.timestamp),
+    primaryKey({ columns: [table.timestamp, table.id] }),
+    index("logs_service_timestamp_idx").on(
+      table.service,
+      desc(table.timestamp),
+    ),
+    index("logs_level_timestamp_idx").on(table.level, desc(table.timestamp)),
   ],
 );
