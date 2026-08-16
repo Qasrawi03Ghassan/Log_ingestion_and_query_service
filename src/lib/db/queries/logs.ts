@@ -28,31 +28,62 @@ export type AggregateFilter = {
 };
 
 export async function storeLogs(
-  /*timestamps: Date[],
+  timestamps: Date[],
   services: string[],
   levels: string[],
   messages: string[],
-  attributes: (JSON | undefined)[],*/
-  validLogs: log[],
+  attributes: (string | undefined)[],
 ) {
-  /*await db.execute(sql`
-  INSERT INTO logs ("timestamp", level, service, message, attributes)
+  await db.execute(sql`
+  INSERT INTO logs (
+    "timestamp",
+    level,
+    service,
+    message,
+    attributes
+  )
   SELECT *
   FROM unnest(
-    ${timestamps}::timestamptz[],
-    ARRAY[${levels}]::varchar(10)[],
-    ARRAY[${services}]::varchar(256)[],
-    ARRAY[${messages}]::varchar(512)[],
     ARRAY[
-  ${sql.join(
-    attributes.map((attribute) => sql`${attribute}::jsonb`),
-    sql`, `,
-  )}
-]::jsonb[]
-    
-  ) 
-`);*/
-  await db.insert(logs).values(validLogs);
+      ${sql.join(
+        timestamps.map((timestamp) => sql`${timestamp}::timestamptz`),
+        sql`, `,
+      )}
+    ]::timestamptz[],
+
+    ARRAY[
+      ${sql.join(
+        levels.map((level) => sql`${level}::varchar(10)`),
+        sql`, `,
+      )}
+    ]::varchar(10)[],
+
+    ARRAY[
+      ${sql.join(
+        services.map((service) => sql`${service}::varchar(256)`),
+        sql`, `,
+      )}
+    ]::varchar(256)[],
+
+    ARRAY[
+      ${sql.join(
+        messages.map((message) => sql`${message}::varchar(512)`),
+        sql`, `,
+      )}
+    ]::varchar(512)[],
+
+    ARRAY[
+      ${sql.join(
+        attributes.map((attribute) =>
+          attribute === undefined || attribute === null
+            ? sql`NULL::jsonb`
+            : sql`${JSON.stringify(attribute)}::jsonb`,
+        ),
+        sql`, `,
+      )}
+    ]::jsonb[]
+  );
+`);
 }
 
 export async function queryLogs(filters: QueryFilter) {

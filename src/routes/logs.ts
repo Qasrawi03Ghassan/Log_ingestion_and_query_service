@@ -202,16 +202,12 @@ logsRouter.post("/", async (req: Request, res: Response) => {
     const services: string[] = validLogs.map((log) => log.service);
     const levels: string[] = validLogs.map((log) => log.level);
     const messages: string[] = validLogs.map((log) => log.message);
-    const attributes = validLogs.map((log) => log.attributes);
+    const attributes: string[] = validLogs.map((log) =>
+      JSON.stringify(log.attributes),
+    );
 
-    const logsToStore = validLogs.map((log) => ({
-      ...log,
-      timestamp: new Date(log.timestamp),
-    }));
     try {
-      await storeLogs(
-        logsToStore /*timestamps, services, levels, messages, attributes*/,
-      );
+      await storeLogs(timestamps, services, levels, messages, attributes);
     } catch (error) {
       console.log(error);
       res
