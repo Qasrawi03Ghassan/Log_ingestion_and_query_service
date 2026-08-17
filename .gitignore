@@ -144,3 +144,4 @@ vite.config.ts.timestamp-*
 
 scripts/
 load-gen/
+.load-generator.compose.override.yml

@@ -42,7 +42,7 @@ export async function storeLogs(
   services: string[],
   levels: string[],
   messages: string[],
-  attributes: (string | undefined)[],
+  attributes: string[],
 ) {
   if (timestamps.length === 0) {
     console.log("No logs to ingest.");
@@ -79,22 +79,25 @@ export async function storeLogs(
     );
 
     const source = Readable.from(
-      timestamps.map((timestamp, i) => {
-        const attribute =
-          attributes[i] === undefined || attributes[i] === null
-            ? "\\N"
-            : escapeCopyText(attributes[i]!);
+      (function* () {
+        for (let i = 0; i < timestamps.length; i++) {
+          const attribute =
+            attributes[i] === undefined
+              ? "\\N"
+              : escapeCopyText(attributes[i]!);
 
-        return (
-          [
-            escapeCopyText(timestamp.toISOString()),
-            escapeCopyText(levels[i] ?? "N/A"),
-            escapeCopyText(services[i] ?? "N/A"),
-            escapeCopyText(messages[i] ?? "N/A"),
-            attribute,
-          ].join("\t") + "\n"
-        );
-      }),
+          yield escapeCopyText(timestamps[i]!.toISOString()) +
+            "\t" +
+            escapeCopyText(levels[i]!) +
+            "\t" +
+            escapeCopyText(services[i]!) +
+            "\t" +
+            escapeCopyText(messages[i]!) +
+            "\t" +
+            attribute +
+            "\n";
+        }
+      })(),
     );
 
     await pipeline(source, copyStream);
@@ -132,7 +135,9 @@ export async function queryLogs(filters: QueryFilter) {
 
   if (filters.attributes !== undefined) {
     for (const [key, value] of Object.entries(filters.attributes)) {
-      conditions.push(sql`${logs.attributes}->>${key} = ${value}`);
+      conditions.push(
+        sql`${logs.attributes} @> ${JSON.stringify({ [key]: value })}::jsonb`,
+      );
     }
   }
 

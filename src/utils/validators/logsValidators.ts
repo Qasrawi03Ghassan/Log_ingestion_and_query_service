@@ -11,11 +11,11 @@ export type log = {
 export function validateRequest(req: Request): boolean {
   const reqBody = req.body;
   const logsArr: log[] = reqBody.logs;
-  if (!logsArr || !Array.isArray(logsArr)) return false;
+  if (!logsArr || !Array.isArray(logsArr) || logsArr.length === 0) return false;
   return true;
 }
 
-export function validateLogs(logs: log[]) {
+/*export function validateLogs(logs: log[]) {
   let validLogs: log[] = [];
   let invalidLogs: {
     index: number;
@@ -29,6 +29,45 @@ export function validateLogs(logs: log[]) {
     } else invalidLogs.push({ index, reason: item.reason });
   }
   return { validLogs, invalidLogs };
+}*/
+export function validateLogs(logs: log[]) {
+  const timestamps: Date[] = [];
+  const services: string[] = [];
+  const levels: string[] = [];
+  const messages: string[] = [];
+  const attributes: string[] = [];
+
+  const invalidLogs: {
+    index: number;
+    reason: string;
+  }[] = [];
+
+  for (const [index, log] of logs.entries()) {
+    const item = validateLog(log);
+
+    if (!item.valid) {
+      invalidLogs.push({
+        index,
+        reason: item.reason,
+      });
+      continue;
+    }
+
+    timestamps.push(new Date(log.timestamp));
+    services.push(log.service);
+    levels.push(log.level);
+    messages.push(log.message);
+    attributes.push(JSON.stringify(log.attributes));
+  }
+
+  return {
+    timestamps,
+    services,
+    levels,
+    messages,
+    attributes,
+    invalidLogs,
+  };
 }
 
 function validateLog(log: log) {

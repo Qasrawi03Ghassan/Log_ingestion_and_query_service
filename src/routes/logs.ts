@@ -180,6 +180,7 @@ logsRouter.get("/", async (req: Request, res: Response) => {
       logs,
       next_cursor,
     });
+    //return res.sendStatus(200);
   } catch (error) {
     return res.status(502).json({
       error: `Cannot query logs from database; reason: ${error}`,
@@ -189,53 +190,55 @@ logsRouter.get("/", async (req: Request, res: Response) => {
 
 logsRouter.post("/", async (req: Request, res: Response) => {
   if (!validateRequest(req)) {
-    res
-      .status(400)
-      .json({ error: "Top-level structure of the request body is not valid" });
+    res.status(400).json({
+      error:
+        "Top-level structure of the request body is not valid, or batch is empty.",
+    });
     return;
   }
 
-  const { validLogs, invalidLogs } = validateLogs(req.body.logs);
-
-  if (validLogs.length > 0) {
+  /*const { validLogs, invalidLogs } = validateLogs(req.body.logs);*/
+  /*if (validLogs.length > 0) {
     const timestamps: Date[] = validLogs.map((log) => new Date(log.timestamp));
     const services: string[] = validLogs.map((log) => log.service);
     const levels: string[] = validLogs.map((log) => log.level);
     const messages: string[] = validLogs.map((log) => log.message);
     const attributes: string[] = validLogs.map((log) =>
       JSON.stringify(log.attributes),
-    );
+    );*/
 
-    /*const logsToStore = validLogs.map((log) => ({
+  /*const logsToStore = validLogs.map((log) => ({
       ...log,
       timestamp: new Date(log.timestamp),
     }));*/
 
-    try {
-      await storeLogs(
-        timestamps,
-        services,
-        levels,
-        messages,
-        attributes /*logsToStore*/,
-      );
-    } catch (error) {
-      console.log(error);
-      res
-        .status(502)
-        .json({ error: `Cannot store logs to database; reason: ${error}` });
-      return;
-    }
+  const { timestamps, services, levels, messages, attributes, invalidLogs } =
+    validateLogs(req.body.logs);
+
+  try {
+    await storeLogs(
+      timestamps,
+      services,
+      levels,
+      messages,
+      attributes /*logsToStore*/,
+    );
+  } catch (error) {
+    console.log(error);
+    res
+      .status(502)
+      .json({ error: `Cannot store logs to database; reason: ${error}` });
+    return;
   }
 
   res
     .status(
-      (validLogs.length === 0 && invalidLogs.length === 0) ||
-        validLogs.length !== 0
+      (timestamps.length === 0 && invalidLogs.length === 0) ||
+        timestamps.length !== 0
         ? 200
         : 400,
     )
-    .json({ accepted: validLogs.length, rejected: invalidLogs });
+    .json({ accepted: timestamps.length, rejected: invalidLogs });
 });
 
 logsRouter.get("/aggregate", async (req: Request, res: Response) => {
@@ -380,6 +383,7 @@ logsRouter.get("/aggregate", async (req: Request, res: Response) => {
         count: Number(row.count),
       })),
     });
+    //res.sendStatus(200);
   } catch (error) {
     return res.status(502).json({
       error: `Cannot aggregate logs form db to the following error: ${error}`,

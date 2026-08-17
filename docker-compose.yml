@@ -1,6 +1,8 @@
 services:
   pg-db:
-    image: postgres:latest
+    image: timescale/timescaledb:latest-pg16 # was postgres:latest , changed to this so i can use timescaledb extension
+    labels:
+      - load-generator.role=postgres
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres

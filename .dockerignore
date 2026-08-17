@@ -6,3 +6,4 @@ dist
 npm-debug.log*
 load-gen
 scripts
+.load-generator.compose.override.yml
