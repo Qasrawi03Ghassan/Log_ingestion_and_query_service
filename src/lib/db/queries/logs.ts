@@ -1,8 +1,8 @@
-import { db, pool } from "../index.js";
+import { db, pool, queryDB } from "../index.js";
 import { eq, gte, lt, and, desc, sql, asc } from "drizzle-orm";
 import { logs } from "../schemas/schema.js";
 import { LogCursor } from "../../../utils/cursorLogUtils.js";
-import { log } from "../../../utils/validators/logsValidators.js";
+//import { log } from "../../../utils/validators/logsValidators.js";
 import { Readable } from "node:stream";
 import { pipeline } from "node:stream/promises";
 import { from as copyFrom } from "pg-copy-streams";
@@ -145,7 +145,7 @@ export async function queryLogs(filters: QueryFilter) {
     conditions.push(sql`${logs.message} ILIKE ${`%${filters.q}%`}`);
   }
 
-  let res = await db
+  let res = await queryDB
     .select()
     .from(logs)
     .where(and(...conditions))

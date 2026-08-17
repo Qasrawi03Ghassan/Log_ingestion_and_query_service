@@ -28,8 +28,11 @@ app.get("/", (req: Request, res: Response) => {
   res.status(200).redirect("/health");
 });
 
-app.listen(Number(PORT), "0.0.0.0", () => {
+app.listen(Number(PORT), "0.0.0.0", async () => {
   console.log(`Log service started on http://localhost:${PORT} ...`);
+
+  await initRetention();
+
   let isRetRunning = false;
 
   setInterval(async () => {
