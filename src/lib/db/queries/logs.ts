@@ -1,9 +1,11 @@
-import { db } from "../index.js";
+import { db, pool } from "../index.js";
 import { eq, gte, lt, and, desc, sql, asc } from "drizzle-orm";
 import { logs } from "../schemas/schema.js";
-
 import { LogCursor } from "../../../utils/cursorLogUtils.js";
 import { log } from "../../../utils/validators/logsValidators.js";
+import { Readable } from "node:stream";
+import { pipeline } from "node:stream/promises";
+import { from as copyFrom } from "pg-copy-streams";
 
 type QueryFilter = {
   service?: string | undefined;
@@ -27,66 +29,78 @@ export type AggregateFilter = {
   group_by?: string | undefined;
 };
 
+function escapeCopyText(value: string): string {
+  return value
+    .replaceAll("\\", "\\\\")
+    .replaceAll("\t", "\\t")
+    .replaceAll("\n", "\\n")
+    .replaceAll("\r", "\\r");
+}
+
 export async function storeLogs(
-  /*timestamps: Date[],
+  timestamps: Date[],
   services: string[],
   levels: string[],
   messages: string[],
-  attributes: (string | undefined)[],*/
-  validLogs: log[],
+  attributes: (string | undefined)[],
 ) {
-  /*await db.execute(sql`
-  INSERT INTO logs (
-    "timestamp",
-    level,
-    service,
-    message,
-    attributes
-  )
-  SELECT *
-  FROM unnest(
-    ARRAY[
-      ${sql.join(
-        timestamps.map((timestamp) => sql`${timestamp}::timestamptz`),
-        sql`, `,
-      )}
-    ]::timestamptz[],
+  if (timestamps.length === 0) {
+    console.log("No logs to ingest.");
+    return;
+  }
 
-    ARRAY[
-      ${sql.join(
-        levels.map((level) => sql`${level}::varchar(10)`),
-        sql`, `,
-      )}
-    ]::varchar(10)[],
+  if (
+    timestamps.length !== services.length ||
+    timestamps.length !== levels.length ||
+    timestamps.length !== messages.length ||
+    timestamps.length !== attributes.length
+  ) {
+    throw new Error("Log arrays must have same length!");
+  }
 
-    ARRAY[
-      ${sql.join(
-        services.map((service) => sql`${service}::varchar(256)`),
-        sql`, `,
-      )}
-    ]::varchar(256)[],
+  const client = await pool.connect();
+  try {
+    const copyStream = client.query(
+      copyFrom(`
+        COPY logs (
+          "timestamp",
+          level,
+          service,
+          message,
+          attributes
+        )
+        FROM STDIN
+        WITH (
+          FORMAT text,
+          DELIMITER E'\\t',
+          NULL '\\N'
+        )
+      `),
+    );
 
-    ARRAY[
-      ${sql.join(
-        messages.map((message) => sql`${message}::varchar(512)`),
-        sql`, `,
-      )}
-    ]::varchar(512)[],
+    const source = Readable.from(
+      timestamps.map((timestamp, i) => {
+        const attribute =
+          attributes[i] === undefined || attributes[i] === null
+            ? "\\N"
+            : escapeCopyText(attributes[i]!);
 
-    ARRAY[
-      ${sql.join(
-        attributes.map((attribute) =>
-          attribute === undefined || attribute === null
-            ? sql`NULL::jsonb`
-            : sql`${attribute}::jsonb`,
-        ),
-        sql`, `,
-      )}
-    ]::jsonb[]
-  );
-`);*/
+        return (
+          [
+            escapeCopyText(timestamp.toISOString()),
+            escapeCopyText(levels[i] ?? "N/A"),
+            escapeCopyText(services[i] ?? "N/A"),
+            escapeCopyText(messages[i] ?? "N/A"),
+            attribute,
+          ].join("\t") + "\n"
+        );
+      }),
+    );
 
-  await db.insert(logs).values(validLogs);
+    await pipeline(source, copyStream);
+  } finally {
+    client.release();
+  }
 }
 
 export async function queryLogs(filters: QueryFilter) {
