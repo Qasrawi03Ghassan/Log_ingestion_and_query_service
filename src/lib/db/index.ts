@@ -12,5 +12,11 @@ export const queryPool = new Pool({
   max: 4,
 });
 
+export const aggPool = new Pool({
+  connectionString: envs.dbURL,
+  max: 2,
+});
+
 export const db = drizzle({ client: pool });
 export const queryDB = drizzle({ client: queryPool });
+export const aggDB = drizzle({ client: aggPool });

@@ -1,4 +1,4 @@
-import { db, pool, queryDB } from "../index.js";
+import { pool, queryDB, aggDB } from "../index.js";
 import { eq, gte, lt, and, desc, sql, asc } from "drizzle-orm";
 import { logs } from "../schemas/schema.js";
 import { LogCursor } from "../../../utils/cursorLogUtils.js";
@@ -167,7 +167,12 @@ export async function aggregateLogs(filters: AggregateFilter) {
   const interval =
     bucketIntervals[filters.bucket as keyof typeof bucketIntervals];
 
-  const bucket_start = sql<Date>`date_bin(${interval},${logs.timestamp},TIMESTAMP '1970-01-01 00:00:00')`;
+  const bucket_start = sql<Date>`
+  time_bucket(
+    ${interval},
+    ${logs.timestamp}
+  )
+`;
 
   if (filters.service !== undefined)
     conditions.push(eq(logs.service, filters.service));
@@ -189,7 +194,7 @@ export async function aggregateLogs(filters: AggregateFilter) {
   }
 
   if (filters.group_by === "service") {
-    const result = await db
+    const result = await aggDB
       .select({
         start: bucket_start,
         group: logs.service,
@@ -202,7 +207,7 @@ export async function aggregateLogs(filters: AggregateFilter) {
 
     return result;
   } else if (filters.group_by === "level") {
-    const result = await db
+    const result = await aggDB
       .select({
         start: bucket_start,
         group: logs.level,
@@ -215,7 +220,7 @@ export async function aggregateLogs(filters: AggregateFilter) {
 
     return result;
   } else {
-    const result = await db
+    const result = await aggDB
       .select({
         start: bucket_start,
         group: sql<null>`null`,
