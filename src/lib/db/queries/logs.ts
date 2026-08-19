@@ -2,7 +2,7 @@ import { pool, queryDB, aggDB } from "../index.js";
 import { eq, gte, lt, and, desc, sql, asc } from "drizzle-orm";
 import { logs } from "../schemas/schema.js";
 import { LogCursor } from "../../../utils/cursorLogUtils.js";
-//import { log } from "../../../utils/validators/logsValidators.js";
+import { log } from "../../../utils/validators/logsValidators.js";
 import { Readable } from "node:stream";
 import { pipeline } from "node:stream/promises";
 import { from as copyFrom } from "pg-copy-streams";

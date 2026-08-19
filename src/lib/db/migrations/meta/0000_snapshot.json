@@ -1,5 +1,5 @@
 {
-  "id": "86201adb-a6b4-4703-807f-6b7d85119bca",
+  "id": "ccda248e-0576-4437-912a-bfdd55241d90",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -45,50 +45,7 @@
           "notNull": false
         }
       },
-      "indexes": {
-        "logs_service_timestamp_idx": {
-          "name": "logs_service_timestamp_idx",
-          "columns": [
-            {
-              "expression": "service",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "\"timestamp\" desc",
-              "asc": true,
-              "isExpression": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "logs_level_timestamp_idx": {
-          "name": "logs_level_timestamp_idx",
-          "columns": [
-            {
-              "expression": "level",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "\"timestamp\" desc",
-              "asc": true,
-              "isExpression": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
+      "indexes": {},
       "foreignKeys": {},
       "compositePrimaryKeys": {
         "logs_timestamp_id_pk": {

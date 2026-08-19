@@ -12,11 +12,15 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
-    #deploy:
-    #resources:
-    #limits:
-    #cpus: "1.0"
-    #memory: 1G
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 1G
+    command:
+      - postgres
+      - -c
+      - synchronous_commit=off
 
   app:
     build: .
@@ -32,8 +36,8 @@ services:
       pg-db:
         condition: service_healthy
     command: sh -c "npm run db-migrate && npm run test && npm run start"
-    #deploy:
-    #resources:
-    #limits:
-    #  cpus: "0.5"
-    #  memory: 256M
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 256M
