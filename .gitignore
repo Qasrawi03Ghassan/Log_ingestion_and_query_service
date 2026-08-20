@@ -146,3 +146,4 @@ scripts/
 load-gen/
 .load-generator.compose.override.yml
 benchmark-report.json
+logs.tsv

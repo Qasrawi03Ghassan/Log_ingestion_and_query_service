@@ -20,6 +20,22 @@ services:
     command:
       - postgres
       - -c
+      - shared_buffers=256MB
+      - -c
+      - effective_cache_size=512MB
+      - -c
+      - work_mem=4MB
+      - -c
+      - wal_buffers=16MB
+      - -c
+      - min_wal_size=256MB
+      - -c
+      - max_wal_size=1GB
+      - -c
+      - checkpoint_timeout=15min
+      - -c
+      - checkpoint_completion_target=0.9
+      - -c
       - synchronous_commit=off
 
   app:

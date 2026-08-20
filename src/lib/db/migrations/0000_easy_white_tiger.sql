@@ -1,9 +1,9 @@
 CREATE TABLE IF NOT EXISTS "logs" (
 	"id" serial NOT NULL,
 	"timestamp" timestamptz NOT NULL,
-	"level" varchar(10) NOT NULL,
-	"service" varchar(256) NOT NULL,
-	"message" varchar(512) NOT NULL,
+	"level" text NOT NULL,
+	"service" text NOT NULL,
+	"message" text NOT NULL,
 	"attributes" jsonb,
 	CONSTRAINT "logs_timestamp_id_pk" PRIMARY KEY("timestamp","id")
 );
@@ -39,9 +39,11 @@ SELECT create_hypertable(
 --     end_offset => INTERVAL '10 seconds',
 --     schedule_interval => INTERVAL '1 minute'
 -- );
+DROP INDEX IF EXISTS "logs_timestamp_id_idx";
 
-CREATE INDEX IF NOT EXISTS "logs_service_timestamp_idx" ON "logs" USING btree ("service","timestamp" desc, "id" desc);
-CREATE INDEX IF NOT EXISTS "logs_level_timestamp_idx" ON "logs" USING btree ("level","timestamp" desc, "id" desc);
+--CREATE INDEX IF NOT EXISTS "logs_service_timestamp_idx" ON "logs" USING btree ("service","timestamp" desc, "id" desc);
+--CREATE INDEX IF NOT EXISTS "logs_level_timestamp_idx" ON "logs" USING btree ("level","timestamp" desc, "id" desc);
+CREATE INDEX IF NOT EXISTS "logs_timestamp_id_idx" ON "logs" USING btree ("timestamp" desc, "id" desc);
 --CREATE INDEX IF NOT EXISTS "logs_attributes_gin_idx" ON "logs" USING GIN ("attributes");
 
 --CREATE EXTENSION IF NOT EXISTS pg_trgm;

@@ -42,6 +42,8 @@ export function validateLogs(logs: log[]) {
     reason: string;
   }[] = [];
 
+  const copyRows = [];
+
   for (const [index, log] of logs.entries()) {
     const item = validateLog(log);
 
@@ -53,19 +55,32 @@ export function validateLogs(logs: log[]) {
       continue;
     }
 
-    timestamps.push(new Date(log.timestamp));
-    services.push(log.service);
-    levels.push(log.level);
-    messages.push(log.message);
-    attributes.push(JSON.stringify(log.attributes));
+    copyRows.push(
+      `${new Date(log.timestamp).toISOString()}\t` +
+        `${escapeCopyText(log.level)}\t` +
+        `${escapeCopyText(log.service)}\t` +
+        `${escapeCopyText(log.message)}\t` +
+        `${
+          log.attributes === undefined
+            ? "\\N"
+            : escapeCopyText(JSON.stringify(log.attributes))
+        }\n`,
+    );
+
+    /*timestamps.push(new Date(log.timestamp));
+    services.push(escapeCopyText(log.service));
+    levels.push(escapeCopyText(log.level));
+    messages.push(escapeCopyText(log.message));
+    attributes.push(escapeCopyText(JSON.stringify(log.attributes)));*/
   }
 
   return {
-    timestamps,
-    services,
-    levels,
-    messages,
-    attributes,
+    // timestamps,
+    // services,
+    // levels,
+    // messages,
+    // attributes,
+    copyRows,
     invalidLogs,
   };
 }
@@ -197,4 +212,12 @@ function isValidAttributes(attributes: unknown): {
   }
 
   return { valid: true, reason: "ok" };
+}
+
+function escapeCopyText(value: string): string {
+  return value
+    .replaceAll("\\", "\\\\")
+    .replaceAll("\t", "\\t")
+    .replaceAll("\n", "\\n")
+    .replaceAll("\r", "\\r");
 }

@@ -4,19 +4,7 @@ import { Pool } from "pg";
 
 export const pool = new Pool({
   connectionString: envs.dbURL,
-  max: 10, //10 ==> about 9.5k // 5 ==> about ?? // 8 ==> about ??*/
-});
-
-export const queryPool = new Pool({
-  connectionString: envs.dbURL,
-  max: 4,
-});
-
-export const aggPool = new Pool({
-  connectionString: envs.dbURL,
-  max: 4,
+  max: 8, //10 ==> about 9.5k // 5 ==> about ?? // 8 ==> about ??*/
 });
 
 export const db = drizzle({ client: pool });
-export const queryDB = drizzle({ client: queryPool });
-export const aggDB = drizzle({ client: aggPool });

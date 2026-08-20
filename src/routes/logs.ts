@@ -6,15 +6,16 @@ import {
 } from "../utils/validators/logsValidators.js";
 import {
   queryLogs,
-  storeLogs,
   aggregateLogs,
   AggregateFilter,
+  storeLogs,
 } from "../lib/db/queries/logs.js";
 import {
   LogCursor,
   encodeCursor,
   decodeCursor,
 } from "../utils/cursorLogUtils.js";
+import { enqueueCopyRows } from "../services/logs-buffer.js";
 
 export const logsRouter = Router();
 
@@ -196,32 +197,26 @@ logsRouter.post("/", async (req: Request, res: Response) => {
     });
     return;
   }
-
-  /*const { validLogs, invalidLogs } = validateLogs(req.body.logs);*/
-  /*if (validLogs.length > 0) {
-    const timestamps: Date[] = validLogs.map((log) => new Date(log.timestamp));
-    const services: string[] = validLogs.map((log) => log.service);
-    const levels: string[] = validLogs.map((log) => log.level);
-    const messages: string[] = validLogs.map((log) => log.message);
-    const attributes: string[] = validLogs.map((log) =>
-      JSON.stringify(log.attributes),
-    );*/
-
-  /*const logsToStore = validLogs.map((log) => ({
-      ...log,
-      timestamp: new Date(log.timestamp),
-    }));*/
-
-  const { timestamps, services, levels, messages, attributes, invalidLogs } =
-    validateLogs(req.body.logs);
+  const { copyRows, invalidLogs } = validateLogs(req.body.logs);
 
   try {
+    await enqueueCopyRows(copyRows);
+  } catch (error) {
+    console.error("Cannot enqueue logs:", error);
+    res.status(500).json({
+      error: "Cannot enqueue logs for storage",
+    });
+    return;
+  }
+  /*try {
     await storeLogs(
       timestamps,
       services,
       levels,
       messages,
-      attributes /*logsToStore*/,
+      attributes,
+      logsToStore
+      //copyRows,
     );
   } catch (error) {
     console.log(error);
@@ -229,16 +224,16 @@ logsRouter.post("/", async (req: Request, res: Response) => {
       .status(502)
       .json({ error: `Cannot store logs to database; reason: ${error}` });
     return;
-  }
+  }*/
 
   res
     .status(
-      (timestamps.length === 0 && invalidLogs.length === 0) ||
-        timestamps.length !== 0
+      (copyRows.length === 0 && invalidLogs.length === 0) ||
+        copyRows.length !== 0
         ? 200
         : 400,
     )
-    .json({ accepted: timestamps.length, rejected: invalidLogs });
+    .json({ accepted: copyRows.length, rejected: invalidLogs });
 });
 
 logsRouter.get("/aggregate", async (req: Request, res: Response) => {
@@ -374,7 +369,8 @@ logsRouter.get("/aggregate", async (req: Request, res: Response) => {
     attributes: attrs,
   };
 
-  try {
+  res.sendStatus(200);
+  /*try {
     const aggRes = await aggregateLogs(aggFilter);
     return res.status(200).json({
       buckets: aggRes.map((row) => ({
@@ -383,10 +379,9 @@ logsRouter.get("/aggregate", async (req: Request, res: Response) => {
         count: Number(row.count),
       })),
     });
-    //res.sendStatus(200);
   } catch (error) {
     return res.status(502).json({
       error: `Cannot aggregate logs form db to the following error: ${error}`,
     });
-  }
+  }*/
 });

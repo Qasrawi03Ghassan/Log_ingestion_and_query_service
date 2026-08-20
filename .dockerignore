@@ -8,3 +8,4 @@ load-gen
 scripts
 .load-generator.compose.override.yml
 benchmark-report.json
+logs.tsv

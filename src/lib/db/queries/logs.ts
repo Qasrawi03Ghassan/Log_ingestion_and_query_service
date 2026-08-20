@@ -1,8 +1,7 @@
-import { pool, queryDB, aggDB } from "../index.js";
+import { pool, db } from "../index.js";
 import { eq, gte, lt, and, desc, sql, asc } from "drizzle-orm";
 import { logs } from "../schemas/schema.js";
 import { LogCursor } from "../../../utils/cursorLogUtils.js";
-import { log } from "../../../utils/validators/logsValidators.js";
 import { Readable } from "node:stream";
 import { pipeline } from "node:stream/promises";
 import { from as copyFrom } from "pg-copy-streams";
@@ -29,35 +28,11 @@ export type AggregateFilter = {
   group_by?: string | undefined;
 };
 
-function escapeCopyText(value: string): string {
-  return value
-    .replaceAll("\\", "\\\\")
-    .replaceAll("\t", "\\t")
-    .replaceAll("\n", "\\n")
-    .replaceAll("\r", "\\r");
-}
-
-export async function storeLogs(
-  timestamps: Date[],
-  services: string[],
-  levels: string[],
-  messages: string[],
-  attributes: string[],
-) {
-  if (timestamps.length === 0) {
+export async function storeLogs(copyRows: string[]) {
+  if (copyRows.length === 0) {
     console.log("No logs to ingest.");
     return;
   }
-
-  if (
-    timestamps.length !== services.length ||
-    timestamps.length !== levels.length ||
-    timestamps.length !== messages.length ||
-    timestamps.length !== attributes.length
-  ) {
-    throw new Error("Log arrays must have same length!");
-  }
-
   const client = await pool.connect();
   try {
     const copyStream = client.query(
@@ -77,30 +52,7 @@ export async function storeLogs(
         )
       `),
     );
-
-    const source = Readable.from(
-      (function* () {
-        for (let i = 0; i < timestamps.length; i++) {
-          const attribute =
-            attributes[i] === undefined
-              ? "\\N"
-              : escapeCopyText(attributes[i]!);
-
-          yield escapeCopyText(timestamps[i]!.toISOString()) +
-            "\t" +
-            escapeCopyText(levels[i]!) +
-            "\t" +
-            escapeCopyText(services[i]!) +
-            "\t" +
-            escapeCopyText(messages[i]!) +
-            "\t" +
-            attribute +
-            "\n";
-        }
-      })(),
-    );
-
-    await pipeline(source, copyStream);
+    await pipeline(Readable.from(copyRows), copyStream);
   } finally {
     client.release();
   }
@@ -145,7 +97,7 @@ export async function queryLogs(filters: QueryFilter) {
     conditions.push(sql`${logs.message} ILIKE ${`%${filters.q}%`}`);
   }
 
-  let res = await queryDB
+  let res = await db
     .select()
     .from(logs)
     .where(and(...conditions))
@@ -194,7 +146,7 @@ export async function aggregateLogs(filters: AggregateFilter) {
   }
 
   if (filters.group_by === "service") {
-    const result = await aggDB
+    const result = await db
       .select({
         start: bucket_start,
         group: logs.service,
@@ -207,7 +159,7 @@ export async function aggregateLogs(filters: AggregateFilter) {
 
     return result;
   } else if (filters.group_by === "level") {
-    const result = await aggDB
+    const result = await db
       .select({
         start: bucket_start,
         group: logs.level,
@@ -220,7 +172,7 @@ export async function aggregateLogs(filters: AggregateFilter) {
 
     return result;
   } else {
-    const result = await aggDB
+    const result = await db
       .select({
         start: bucket_start,
         group: sql<null>`null`,
