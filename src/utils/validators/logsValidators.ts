@@ -30,19 +30,16 @@ export function validateRequest(req: Request): boolean {
   }
   return { validLogs, invalidLogs };
 }*/
-export function validateLogs(logs: log[]) {
-  const timestamps: Date[] = [];
-  const services: string[] = [];
-  const levels: string[] = [];
-  const messages: string[] = [];
-  const attributes: string[] = [];
 
+export type aggInput = { timestamp: Date; level: string; service: string };
+export function validateLogs(logs: log[]) {
   const invalidLogs: {
     index: number;
     reason: string;
   }[] = [];
 
   const copyRows = [];
+  const aggInput: aggInput[] = [];
 
   for (const [index, log] of logs.entries()) {
     const item = validateLog(log);
@@ -55,8 +52,9 @@ export function validateLogs(logs: log[]) {
       continue;
     }
 
+    const timestamp = new Date(log.timestamp);
     copyRows.push(
-      `${new Date(log.timestamp).toISOString()}\t` +
+      `${timestamp.toISOString()}\t` +
         `${escapeCopyText(log.level)}\t` +
         `${escapeCopyText(log.service)}\t` +
         `${escapeCopyText(log.message)}\t` +
@@ -67,21 +65,13 @@ export function validateLogs(logs: log[]) {
         }\n`,
     );
 
-    /*timestamps.push(new Date(log.timestamp));
-    services.push(escapeCopyText(log.service));
-    levels.push(escapeCopyText(log.level));
-    messages.push(escapeCopyText(log.message));
-    attributes.push(escapeCopyText(JSON.stringify(log.attributes)));*/
+    aggInput.push({ timestamp, level: log.level, service: log.service });
   }
 
   return {
-    // timestamps,
-    // services,
-    // levels,
-    // messages,
-    // attributes,
     copyRows,
     invalidLogs,
+    aggInput,
   };
 }
 

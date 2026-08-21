@@ -1,5 +1,5 @@
 {
-  "id": "ccda248e-0576-4437-912a-bfdd55241d90",
+  "id": "f587d5e3-a1a5-4da9-8e44-dd1a470ffb4c",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -22,19 +22,19 @@
         },
         "level": {
           "name": "level",
-          "type": "varchar(10)",
+          "type": "text",
           "primaryKey": false,
           "notNull": true
         },
         "service": {
           "name": "service",
-          "type": "varchar(256)",
+          "type": "text",
           "primaryKey": false,
           "notNull": true
         },
         "message": {
           "name": "message",
-          "type": "varchar(512)",
+          "type": "text",
           "primaryKey": false,
           "notNull": true
         },
@@ -53,6 +53,53 @@
           "columns": [
             "timestamp",
             "id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.logs_aggregate_rollup_1m": {
+      "name": "logs_aggregate_rollup_1m",
+      "schema": "",
+      "columns": {
+        "bucket_start": {
+          "name": "bucket_start",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "level": {
+          "name": "level",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "service": {
+          "name": "service",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "log_count": {
+          "name": "log_count",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "0"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {
+        "logs_aggregate_rollup_1m_bucket_start_service_level_pk": {
+          "name": "logs_aggregate_rollup_1m_bucket_start_service_level_pk",
+          "columns": [
+            "bucket_start",
+            "service",
+            "level"
           ]
         }
       },

@@ -4,7 +4,7 @@ import { Pool } from "pg";
 
 export const pool = new Pool({
   connectionString: envs.dbURL,
-  max: 8, //10 ==> about 9.5k // 5 ==> about ?? // 8 ==> about ??*/
+  max: 8,
 });
 
 export const db = drizzle({ client: pool });

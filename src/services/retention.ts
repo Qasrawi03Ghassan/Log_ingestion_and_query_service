@@ -1,6 +1,6 @@
-import { db } from "./index.js";
+import { db } from "../lib/db/index.js";
 import { sql } from "drizzle-orm";
-import envs from "../../envs/envs.js";
+import envs from "../envs/envs.js";
 
 export async function initRetention() {
   const cutoff = new Date(Date.now() - turnDaysToMs(envs.retentionDays));

@@ -16,6 +16,22 @@ SELECT create_hypertable(
   migrate_data => TRUE
 );
 
+-- CREATE TABLE IF NOT EXISTS "logs_1m"(
+-- 	"bucket_start" timestamptz NOT NULL,
+-- 	"level" text NOT NULL,
+-- 	"service" text NOT NULL,
+-- 	"log_count" bigint NOT NULL DEFAULT 0,
+
+-- 	PRIMARY KEY ("bucket_start", "service", "level")
+-- );
+
+-- SELECT create_hypertable(
+--   'logs_1m',
+--   'bucket_start',
+--   if_not_exists => TRUE,
+--   migrate_data => TRUE
+-- );
+
 -- CREATE MATERIALIZED VIEW IF NOT EXISTS logs_1m
 -- WITH (timescaledb.continuous) AS
 -- SELECT
@@ -39,11 +55,12 @@ SELECT create_hypertable(
 --     end_offset => INTERVAL '10 seconds',
 --     schedule_interval => INTERVAL '1 minute'
 -- );
+
 DROP INDEX IF EXISTS "logs_timestamp_id_idx";
+CREATE INDEX IF NOT EXISTS "logs_timestamp_id_idx" ON "logs" USING btree ("timestamp" desc, "id" desc);
 
 --CREATE INDEX IF NOT EXISTS "logs_service_timestamp_idx" ON "logs" USING btree ("service","timestamp" desc, "id" desc);
 --CREATE INDEX IF NOT EXISTS "logs_level_timestamp_idx" ON "logs" USING btree ("level","timestamp" desc, "id" desc);
-CREATE INDEX IF NOT EXISTS "logs_timestamp_id_idx" ON "logs" USING btree ("timestamp" desc, "id" desc);
 --CREATE INDEX IF NOT EXISTS "logs_attributes_gin_idx" ON "logs" USING GIN ("attributes");
 
 --CREATE EXTENSION IF NOT EXISTS pg_trgm;

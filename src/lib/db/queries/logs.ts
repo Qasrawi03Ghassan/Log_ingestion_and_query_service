@@ -1,6 +1,6 @@
 import { pool, db } from "../index.js";
 import { eq, gte, lt, and, desc, sql, asc } from "drizzle-orm";
-import { logs } from "../schemas/schema.js";
+import { logs, logs_1m } from "../schemas/schema.js";
 import { LogCursor } from "../../../utils/cursorLogUtils.js";
 import { Readable } from "node:stream";
 import { pipeline } from "node:stream/promises";
@@ -107,8 +107,94 @@ export async function queryLogs(filters: QueryFilter) {
   return res;
 }
 
+export async function aggregateRollupLogs(filters: AggregateFilter) {
+  const bucketIntervals = {
+    "1m": sql`INTERVAL '1 minute'`,
+    "5m": sql`INTERVAL '5 minutes'`,
+    "1h": sql`INTERVAL '1 hour'`,
+    "1d": sql`INTERVAL '1 day'`,
+  };
+
+  const interval =
+    bucketIntervals[filters.bucket as keyof typeof bucketIntervals];
+
+  const bucketStart = sql<Date>`
+    time_bucket(
+      ${interval},
+      ${logs_1m.bucket_start}
+    )
+  `;
+
+  const conditions = [
+    gte(logs_1m.bucket_start, new Date(filters.since)),
+    lt(logs_1m.bucket_start, new Date(filters.until)),
+  ];
+
+  if (filters.service !== undefined) {
+    conditions.push(eq(logs_1m.service, filters.service));
+  }
+
+  if (filters.level !== undefined) {
+    conditions.push(eq(logs_1m.level, filters.level));
+  }
+
+  if (filters.group_by === "service") {
+    return db
+      .select({
+        start: bucketStart,
+        group: logs_1m.service,
+        count: sql<number>`
+          SUM(${logs_1m.log_count})
+        `,
+      })
+      .from(logs_1m)
+      .where(and(...conditions))
+      .groupBy(bucketStart, logs_1m.service)
+      .orderBy(asc(bucketStart));
+  }
+
+  if (filters.group_by === "level") {
+    return db
+      .select({
+        start: bucketStart,
+        group: logs_1m.level,
+        count: sql<number>`
+          SUM(${logs_1m.log_count})
+        `,
+      })
+      .from(logs_1m)
+      .where(and(...conditions))
+      .groupBy(bucketStart, logs_1m.level)
+      .orderBy(asc(bucketStart));
+  }
+
+  return db
+    .select({
+      start: bucketStart,
+      group: sql<null>`NULL`,
+      count: sql<number>`
+        SUM(${logs_1m.log_count})
+      `,
+    })
+    .from(logs_1m)
+    .where(and(...conditions))
+    .groupBy(bucketStart)
+    .orderBy(asc(bucketStart));
+}
+
 export async function aggregateLogs(filters: AggregateFilter) {
-  const conditions = [];
+  if (
+    (filters.group_by === "service" || filters.group_by === "level") &&
+    filters.attributes === undefined &&
+    filters.q === undefined
+  ) {
+    return await aggregateRollupLogs(filters);
+  }
+
+  const conditions = [
+    gte(logs.timestamp, new Date(filters.since)),
+    lt(logs.timestamp, new Date(filters.until)),
+  ];
   const bucketIntervals = {
     "1m": sql`INTERVAL '1 minute'`,
     "5m": sql`INTERVAL '5 minutes'`,
@@ -126,15 +212,6 @@ export async function aggregateLogs(filters: AggregateFilter) {
   )
 `;
 
-  if (filters.service !== undefined)
-    conditions.push(eq(logs.service, filters.service));
-
-  if (filters.level !== undefined)
-    conditions.push(eq(logs.level, filters.level));
-
-  conditions.push(gte(logs.timestamp, new Date(filters.since)));
-  conditions.push(lt(logs.timestamp, new Date(filters.until)));
-
   if (filters.attributes !== undefined) {
     for (const [key, value] of Object.entries(filters.attributes)) {
       conditions.push(sql`${logs.attributes}->>${key} = ${value}`);
@@ -145,44 +222,16 @@ export async function aggregateLogs(filters: AggregateFilter) {
     conditions.push(sql`${logs.message} ILIKE ${`%${filters.q}%`}`);
   }
 
-  if (filters.group_by === "service") {
-    const result = await db
-      .select({
-        start: bucket_start,
-        group: logs.service,
-        count: sql<number>`count(*)`,
-      })
-      .from(logs)
-      .where(and(...conditions))
-      .groupBy(bucket_start, logs.service)
-      .orderBy(asc(bucket_start));
+  const result = await db
+    .select({
+      start: bucket_start,
+      group: sql<null>`NULL`,
+      count: sql<number>`count(*)`,
+    })
+    .from(logs)
+    .where(and(...conditions))
+    .groupBy(bucket_start)
+    .orderBy(asc(bucket_start));
 
-    return result;
-  } else if (filters.group_by === "level") {
-    const result = await db
-      .select({
-        start: bucket_start,
-        group: logs.level,
-        count: sql<number>`count(*)`,
-      })
-      .from(logs)
-      .where(and(...conditions))
-      .groupBy(bucket_start, logs.level)
-      .orderBy(asc(bucket_start));
-
-    return result;
-  } else {
-    const result = await db
-      .select({
-        start: bucket_start,
-        group: sql<null>`null`,
-        count: sql<number>`count(*)`,
-      })
-      .from(logs)
-      .where(and(...conditions))
-      .groupBy(bucket_start)
-      .orderBy(asc(bucket_start));
-
-    return result;
-  }
+  return result;
 }

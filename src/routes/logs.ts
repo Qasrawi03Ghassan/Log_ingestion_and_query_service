@@ -8,7 +8,6 @@ import {
   queryLogs,
   aggregateLogs,
   AggregateFilter,
-  storeLogs,
 } from "../lib/db/queries/logs.js";
 import {
   LogCursor,
@@ -197,10 +196,10 @@ logsRouter.post("/", async (req: Request, res: Response) => {
     });
     return;
   }
-  const { copyRows, invalidLogs } = validateLogs(req.body.logs);
+  const { copyRows, invalidLogs, aggInput } = validateLogs(req.body.logs);
 
   try {
-    await enqueueCopyRows(copyRows);
+    await enqueueCopyRows(copyRows, aggInput);
   } catch (error) {
     console.error("Cannot enqueue logs:", error);
     res.status(500).json({
@@ -208,23 +207,6 @@ logsRouter.post("/", async (req: Request, res: Response) => {
     });
     return;
   }
-  /*try {
-    await storeLogs(
-      timestamps,
-      services,
-      levels,
-      messages,
-      attributes,
-      logsToStore
-      //copyRows,
-    );
-  } catch (error) {
-    console.log(error);
-    res
-      .status(502)
-      .json({ error: `Cannot store logs to database; reason: ${error}` });
-    return;
-  }*/
 
   res
     .status(

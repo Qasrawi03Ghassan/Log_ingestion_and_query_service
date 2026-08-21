@@ -3,7 +3,7 @@ import envs from "./envs/envs.js";
 import cors from "cors";
 import healthRouter from "./routes/health.js";
 import { logsRouter } from "./routes/logs.js";
-import { initRetention } from "./lib/db/retention.js";
+import { initRetention } from "./services/retention.js";
 import { turnHrsToMs } from "./utils/initUtils.js";
 
 const app = express();

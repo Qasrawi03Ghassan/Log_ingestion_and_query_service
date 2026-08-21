@@ -1,10 +1,12 @@
+import { sql } from "drizzle-orm";
 import {
   jsonb,
   pgTable,
   timestamp,
-  varchar,
+  text,
   serial,
   primaryKey,
+  bigint,
 } from "drizzle-orm/pg-core";
 
 export const logs = pgTable(
@@ -15,10 +17,28 @@ export const logs = pgTable(
       withTimezone: true,
       mode: "date",
     }).notNull(),
-    level: varchar("level", { length: 10 }).notNull(),
-    service: varchar("service", { length: 256 }).notNull(),
-    message: varchar("message", { length: 512 }).notNull(),
+    level: text("level").notNull(),
+    service: text("service").notNull(),
+    message: text("message").notNull(),
     attributes: jsonb("attributes"),
   },
   (table) => [primaryKey({ columns: [table.timestamp, table.id] })],
+);
+
+export const logs_1m = pgTable(
+  "logs_1m",
+  {
+    bucket_start: timestamp("bucket_start", {
+      withTimezone: true,
+      mode: "date",
+    }).notNull(),
+    level: text("level").notNull(),
+    service: text("service").notNull(),
+    log_count: bigint({ mode: "bigint" })
+      .default(sql`0`)
+      .notNull(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.bucket_start, table.service, table.level] }),
+  ],
 );
