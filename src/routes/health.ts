@@ -5,8 +5,7 @@ const healthRouter = Router();
 
 healthRouter.get("/", async (req: Request, res: Response) => {
   await initService();
-  if (!isServiceReady)
-    res.status(502).json({ Error: "Service is not ready yet" });
+  if (!isServiceReady) res.status(502).json({ error: "Service is not ready" });
   else {
     res
       .status(200)
