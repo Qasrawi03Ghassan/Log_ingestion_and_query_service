@@ -746,9 +746,9 @@ Benchmark results:
 
 Performance and queries metrics results:
 
-| Throughput          | Ingestion P95 latency | Aggregate P95 latency |
-| ------------------- | --------------------- | --------------------- |
-| **~ 8038 logs / s** | 1450 ms               | 2175 ms               |
+| Throughput      | Ingestion P95 latency | Aggregate P95 latency |
+| --------------- | --------------------- | --------------------- |
+| ~ 8038 logs / s | 1450 ms               | 2175 ms               |
 
 Resources usage during benchmark:
 
