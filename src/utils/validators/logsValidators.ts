@@ -8,6 +8,14 @@ export type log = {
   attributes?: JSON;
 };
 
+function escapeCopyText(value: string): string {
+  return value
+    .replaceAll("\\", "\\\\")
+    .replaceAll("\t", "\\t")
+    .replaceAll("\n", "\\n")
+    .replaceAll("\r", "\\r");
+}
+
 export function validateRequest(req: Request): boolean {
   const reqBody = req.body;
   const logsArr: log[] = reqBody.logs;
@@ -15,31 +23,12 @@ export function validateRequest(req: Request): boolean {
   return true;
 }
 
-/*export function validateLogs(logs: log[]) {
-  let validLogs: log[] = [];
-  let invalidLogs: {
-    index: number;
-    reason: string;
-  }[] = [];
-
-  for (let [index, log] of logs.entries()) {
-    let item = validateLog(log);
-    if (item.valid === true) {
-      validLogs.push(log);
-    } else invalidLogs.push({ index, reason: item.reason });
-  }
-  return { validLogs, invalidLogs };
-}*/
-
-export type aggInput = { timestamp: Date; level: string; service: string };
 export function validateLogs(logs: log[]) {
   const invalidLogs: {
     index: number;
     reason: string;
   }[] = [];
-
   const copyRows = [];
-  const aggInput: aggInput[] = [];
 
   for (const [index, log] of logs.entries()) {
     const item = validateLog(log);
@@ -52,9 +41,8 @@ export function validateLogs(logs: log[]) {
       continue;
     }
 
-    const timestamp = new Date(log.timestamp);
     copyRows.push(
-      `${timestamp.toISOString()}\t` +
+      `${new Date(log.timestamp).toISOString()}\t` +
         `${escapeCopyText(log.level)}\t` +
         `${escapeCopyText(log.service)}\t` +
         `${escapeCopyText(log.message)}\t` +
@@ -64,14 +52,11 @@ export function validateLogs(logs: log[]) {
             : escapeCopyText(JSON.stringify(log.attributes))
         }\n`,
     );
-
-    aggInput.push({ timestamp, level: log.level, service: log.service });
   }
 
   return {
     copyRows,
     invalidLogs,
-    aggInput,
   };
 }
 
@@ -202,12 +187,4 @@ function isValidAttributes(attributes: unknown): {
   }
 
   return { valid: true, reason: "ok" };
-}
-
-function escapeCopyText(value: string): string {
-  return value
-    .replaceAll("\\", "\\\\")
-    .replaceAll("\t", "\\t")
-    .replaceAll("\n", "\\n")
-    .replaceAll("\r", "\\r");
 }

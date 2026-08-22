@@ -182,15 +182,7 @@ export async function aggregateRollupLogs(filters: AggregateFilter) {
     .orderBy(asc(bucketStart));
 }
 
-export async function aggregateLogs(filters: AggregateFilter) {
-  if (
-    (filters.group_by === "service" || filters.group_by === "level") &&
-    filters.attributes === undefined &&
-    filters.q === undefined
-  ) {
-    return await aggregateRollupLogs(filters);
-  }
-
+export async function aggregateRawLogs(filters: AggregateFilter) {
   const conditions = [
     gte(logs.timestamp, new Date(filters.since)),
     lt(logs.timestamp, new Date(filters.until)),
@@ -212,17 +204,46 @@ export async function aggregateLogs(filters: AggregateFilter) {
   )
 `;
 
+  if (filters.level !== undefined) {
+    conditions.push(eq(logs.level, filters.level));
+  }
+  if (filters.service !== undefined) {
+    conditions.push(eq(logs.service, filters.service));
+  }
   if (filters.attributes !== undefined) {
     for (const [key, value] of Object.entries(filters.attributes)) {
       conditions.push(sql`${logs.attributes}->>${key} = ${value}`);
     }
   }
-
   if (filters.q !== undefined) {
     conditions.push(sql`${logs.message} ILIKE ${`%${filters.q}%`}`);
   }
 
-  const result = await db
+  if (filters.group_by === "level") {
+    return db
+      .select({
+        start: bucket_start,
+        group: logs.level,
+        count: sql<number>`COUNT(*)`,
+      })
+      .from(logs)
+      .where(and(...conditions))
+      .groupBy(bucket_start, logs.level)
+      .orderBy(asc(bucket_start));
+  } else if (filters.group_by === "service") {
+    return db
+      .select({
+        start: bucket_start,
+        group: logs.service,
+        count: sql<number>`COUNT(*)`,
+      })
+      .from(logs)
+      .where(and(...conditions))
+      .groupBy(bucket_start, logs.service)
+      .orderBy(asc(bucket_start));
+  }
+
+  return db
     .select({
       start: bucket_start,
       group: sql<null>`NULL`,
@@ -232,6 +253,10 @@ export async function aggregateLogs(filters: AggregateFilter) {
     .where(and(...conditions))
     .groupBy(bucket_start)
     .orderBy(asc(bucket_start));
+}
 
-  return result;
+export async function aggregateLogs(filters: AggregateFilter) {
+  if (filters.attributes === undefined || filters.q === undefined)
+    return aggregateRollupLogs(filters);
+  return aggregateRawLogs(filters);
 }

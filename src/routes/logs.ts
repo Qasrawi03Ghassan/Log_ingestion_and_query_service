@@ -180,7 +180,6 @@ logsRouter.get("/", async (req: Request, res: Response) => {
       logs,
       next_cursor,
     });
-    //return res.sendStatus(200);
   } catch (error) {
     return res.status(502).json({
       error: `Cannot query logs from database; reason: ${error}`,
@@ -196,10 +195,10 @@ logsRouter.post("/", async (req: Request, res: Response) => {
     });
     return;
   }
-  const { copyRows, invalidLogs, aggInput } = validateLogs(req.body.logs);
+  const { copyRows, invalidLogs } = validateLogs(req.body.logs);
 
   try {
-    await enqueueCopyRows(copyRows, aggInput);
+    await enqueueCopyRows(copyRows);
   } catch (error) {
     console.error("Cannot enqueue logs:", error);
     res.status(500).json({
@@ -351,8 +350,7 @@ logsRouter.get("/aggregate", async (req: Request, res: Response) => {
     attributes: attrs,
   };
 
-  res.sendStatus(200);
-  /*try {
+  try {
     const aggRes = await aggregateLogs(aggFilter);
     return res.status(200).json({
       buckets: aggRes.map((row) => ({
@@ -365,5 +363,5 @@ logsRouter.get("/aggregate", async (req: Request, res: Response) => {
     return res.status(502).json({
       error: `Cannot aggregate logs form db to the following error: ${error}`,
     });
-  }*/
+  }
 });
